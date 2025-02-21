@@ -2,18 +2,19 @@ document.addEventListener('DOMContentLoaded', function () {
   const table = document.getElementById('resizableTable');
   const headers = table.querySelectorAll('th');
 
+  // Key for localStorage
+  const storageKey = 'columnWidths';
+
   // Load saved column widths from localStorage
+  const savedWidths = JSON.parse(localStorage.getItem(storageKey)) || {};
+
   headers.forEach((header) => {
     const columnId = header.id;
-    const savedWidth = localStorage.getItem(columnId);
-
-    if (savedWidth) {
-      header.style.width = savedWidth; // Apply the saved width
+    if (savedWidths[columnId]) {
+      header.style.width = savedWidths[columnId]; // Apply the saved width
     }
-  });
 
-  // Add resizing functionality
-  headers.forEach((header) => {
+    // Add resizing functionality
     let startX, startWidth;
 
     header.addEventListener('mousedown', (e) => {
@@ -27,14 +28,24 @@ document.addEventListener('DOMContentLoaded', function () {
     function onMouseMove(e) {
       const newWidth = startWidth + (e.clientX - startX);
 
-      // Set the new width of the column being resized
+      // Ensure the new width is not less than a minimum value (e.g., 50px)
+      if (newWidth < 50) newWidth = 50;
+
+      // Calculate the difference in width
+      const widthDifference = newWidth - startWidth;
+
+      // Update the column width
       header.style.width = `${newWidth}px`;
 
-      // Save the new width to localStorage using the column's ID
-      localStorage.setItem(header.id, `${newWidth}px`);
+      // Update the table width
+      const tableWidth = table.offsetWidth;
+      table.style.width = `${tableWidth + widthDifference}px`;
 
-      // Prevent the table from overflowing its container
-      table.style.tableLayout = 'auto';
+      // Update the saved widths object
+      savedWidths[columnId] = `${newWidth}px`;
+
+      // Save the updated widths to localStorage as a JSON string
+      localStorage.setItem(storageKey, JSON.stringify(savedWidths));
     }
 
     function onMouseUp() {
