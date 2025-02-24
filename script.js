@@ -8,11 +8,25 @@ document.addEventListener('DOMContentLoaded', function () {
   // Load saved column widths from localStorage
   const savedWidths = JSON.parse(localStorage.getItem(storageKey)) || {};
 
-  headers.forEach((header) => {
-    const columnId = header.id;
+  // Initialize column widths and set table width
+  let totalWidth = 0;
+  headers.forEach((header, index) => {
+    const columnId = header.id || `col-${index}`;
     if (savedWidths[columnId]) {
       header.style.width = savedWidths[columnId]; // Apply the saved width
+      totalWidth += parseInt(savedWidths[columnId], 10); // Add to total width
+    } else {
+      const initialWidth = header.offsetWidth; // Use current width if no saved width
+      header.style.width = `${initialWidth}px`;
+      totalWidth += initialWidth;
     }
+  });
+
+  // Set the table width to the sum of all column widths
+  table.style.width = `${totalWidth}px`;
+
+  headers.forEach((header, index) => {
+    const columnId = header.id || `col-${index}`;
 
     // Add resizing functionality
     let startX, startWidth;
@@ -37,15 +51,14 @@ document.addEventListener('DOMContentLoaded', function () {
       // Update the column width
       header.style.width = `${newWidth}px`;
 
-      // Update the table width
-      const tableWidth = table.offsetWidth;
-      table.style.width = `${tableWidth + widthDifference}px`;
-
       // Update the saved widths object
       savedWidths[columnId] = `${newWidth}px`;
 
       // Save the updated widths to localStorage as a JSON string
       localStorage.setItem(storageKey, JSON.stringify(savedWidths));
+
+      // Update the table width to match the sum of all column widths
+      updateTableWidth();
     }
 
     function onMouseUp() {
@@ -53,4 +66,30 @@ document.addEventListener('DOMContentLoaded', function () {
       document.removeEventListener('mouseup', onMouseUp);
     }
   });
+
+  function adjustOtherColumns(resizedColumnIndex, widthDifference) {
+    const totalColumns = headers.length;
+    const otherColumnsWidth = Array.from(headers).reduce((sum, header, index) => {
+      if (index !== resizedColumnIndex) {
+        return sum + header.offsetWidth;
+      }
+      return sum;
+    }, 0);
+
+    // Calculate the ratio to adjust the other columns
+    const ratio = (otherColumnsWidth - widthDifference) / otherColumnsWidth;
+
+    // Adjust the widths of the other columns
+    headers.forEach((header, index) => {
+      if (index !== resizedColumnIndex) {
+        const newWidth = header.offsetWidth * ratio;
+        header.style.width = `${newWidth}px`;
+      }
+    });
+  }
+
+  function updateTableWidth() {
+    const newTotalWidth = Array.from(headers).reduce((sum, header) => sum + header.offsetWidth, 0);
+    table.style.width = `${newTotalWidth}px`;
+  }
 });

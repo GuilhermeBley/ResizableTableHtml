@@ -4,7 +4,7 @@ body {
   }
   
   table {
-    width: 100%;
+    width: inherit;
     border-collapse: collapse;
   }
   
