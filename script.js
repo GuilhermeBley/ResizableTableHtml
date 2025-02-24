@@ -8,22 +8,22 @@ document.addEventListener('DOMContentLoaded', function () {
   // Load saved column widths from localStorage
   const savedWidths = JSON.parse(localStorage.getItem(storageKey)) || {};
 
-  // Initialize column widths and set table width
-  let totalWidth = 0;
+  // Initialize column widths and calculate initial table width
+  let tableWidth = 0;
   headers.forEach((header, index) => {
     const columnId = header.id || `col-${index}`;
     if (savedWidths[columnId]) {
       header.style.width = savedWidths[columnId]; // Apply the saved width
-      totalWidth += parseInt(savedWidths[columnId], 10); // Add to total width
+      tableWidth += parseInt(savedWidths[columnId], 10); // Add to table width
     } else {
       const initialWidth = header.offsetWidth; // Use current width if no saved width
       header.style.width = `${initialWidth}px`;
-      totalWidth += initialWidth;
+      tableWidth += initialWidth;
     }
   });
 
-  // Set the table width to the sum of all column widths
-  table.style.width = `${totalWidth}px`;
+  // Set the initial table width
+  table.style.width = `${tableWidth}px`;
 
   headers.forEach((header, index) => {
     const columnId = header.id || `col-${index}`;
@@ -41,24 +41,27 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function onMouseMove(e) {
       const newWidth = startWidth + (e.clientX - startX);
+      let dif = startWidth - newWidth
 
       // Ensure the new width is not less than a minimum value (e.g., 50px)
       if (newWidth < 50) newWidth = 50;
 
-      // Calculate the difference in width
-      const widthDifference = newWidth - startWidth;
-
-      // Update the column width
-      header.style.width = `${newWidth}px`;
+      // Allow increasing size only when moving to the right
+      if (e.clientX > startX) {
+        header.style.width = `${newWidth}px`;
+        updateTableWidth(dif * -1);
+      }
+      // Allow decreasing size only when moving to the left
+      else if (e.clientX < startX) {
+        header.style.width = `${newWidth}px`;
+        updateTableWidth(dif);
+      }
 
       // Update the saved widths object
       savedWidths[columnId] = `${newWidth}px`;
 
       // Save the updated widths to localStorage as a JSON string
       localStorage.setItem(storageKey, JSON.stringify(savedWidths));
-
-      // Update the table width to match the sum of all column widths
-      updateTableWidth();
     }
 
     function onMouseUp() {
@@ -67,29 +70,14 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 
-  function adjustOtherColumns(resizedColumnIndex, widthDifference) {
-    const totalColumns = headers.length;
-    const otherColumnsWidth = Array.from(headers).reduce((sum, header, index) => {
-      if (index !== resizedColumnIndex) {
-        return sum + header.offsetWidth;
-      }
-      return sum;
-    }, 0);
-
-    // Calculate the ratio to adjust the other columns
-    const ratio = (otherColumnsWidth - widthDifference) / otherColumnsWidth;
-
-    // Adjust the widths of the other columns
-    headers.forEach((header, index) => {
-      if (index !== resizedColumnIndex) {
-        const newWidth = header.offsetWidth * ratio;
-        header.style.width = `${newWidth}px`;
-      }
+  // Function to update the table width based on the sum of column widths
+  function updateTableWidth(sizeChanged) {
+    let newTableWidth = 0;
+    headers.forEach((header) => {
+      newTableWidth += header.offsetWidth; // Sum up all column widths
     });
-  }
-
-  function updateTableWidth() {
-    const newTotalWidth = Array.from(headers).reduce((sum, header) => sum + header.offsetWidth, 0);
-    table.style.width = `${newTotalWidth}px`;
+    console.log('table dif is ', sizeChanged)
+    newTableWidth += sizeChanged
+    table.style.width = `${newTableWidth}px`; // Set the table width
   }
 });
