@@ -40,21 +40,27 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     function onMouseMove(e) {
-      const newWidth = startWidth + (e.clientX - startX);
-      let dif = startWidth - newWidth
+      if (e.clientX === startX) return;
+
+      let xDif = e.clientX - startX;
+      const newWidth = startWidth + xDif;
 
       // Ensure the new width is not less than a minimum value (e.g., 50px)
       if (newWidth < 50) newWidth = 50;
 
       // Allow increasing size only when moving to the right
-      if (e.clientX > startX) {
+      if (xDif > 0) {
         header.style.width = `${newWidth}px`;
-        updateTableWidth(dif * -1);
+        let newTableSize = table.offsetWidth + 1;
+        table.style.width = `${newTableSize}px`;
+        console.log('Table size increasing ', table.style.width);
       }
       // Allow decreasing size only when moving to the left
-      else if (e.clientX < startX) {
+      else if (xDif < 0) {
         header.style.width = `${newWidth}px`;
-        updateTableWidth(dif);
+        let newTableSize = table.offsetWidth - 1;
+        table.style.width = `${newTableSize}px`;
+        console.log('Table size decreasing ', table.style.width);
       }
 
       // Update the saved widths object
@@ -71,13 +77,11 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   // Function to update the table width based on the sum of column widths
-  function updateTableWidth(sizeChanged) {
+  function updateTableWidth() {
     let newTableWidth = 0;
     headers.forEach((header) => {
-      newTableWidth += header.offsetWidth; // Sum up all column widths
+      newTableWidth += header.offsetWidth;
     });
-    console.log('table dif is ', sizeChanged)
-    newTableWidth += sizeChanged
-    table.style.width = `${newTableWidth}px`; // Set the table width
+    table.style.width = `${newTableWidth}px`;
   }
 });
