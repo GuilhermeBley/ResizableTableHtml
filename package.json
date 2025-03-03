@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "@validide/resizable-table-columns": "^2.1.0"
+  }
+}
